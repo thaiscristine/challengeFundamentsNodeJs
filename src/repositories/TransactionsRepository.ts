@@ -1,8 +1,10 @@
 import Transaction from '../models/Transaction';
 
-interface TransactionDTO {
+interface CreateTransactionDTO {
   title: string;
+
   value: number;
+
   type: 'income' | 'outcome';
 }
 interface Balance {
@@ -22,15 +24,42 @@ class TransactionsRepository {
     return this.transactions;
   }
 
-  // public getBalance(): Balance {
-  // return this.transactions.total;
-  // }
+  public getBalance(): Balance {
+    // reduzir o valor trabsactions para um novo valor
+    // acumulador seria onde acumularemos os novos dados e o transaction funcionará como um map que representa cada transação no looping
+    const { income, outcome } = this.transactions.reduce(
+      (accumulator: Balance, transaction: Transaction) => {
+        switch (transaction.type) {
+          case 'income':
+            accumulator.income += transaction.value;
+            break;
+          case 'outcome':
+            accumulator.outcome += transaction.value;
+            break;
+          default:
+            break;
+        }
 
-  public create({ title, value, type }: TransactionDTO): Transaction {
+        return accumulator;
+      },
+      // reducer precisa de um valor inicial para formatar o retorno
+      {
+        income: 0,
+        outcome: 0,
+        total: 0,
+      },
+    );
+
+    const total = income - outcome;
+    return { income, outcome, total };
+  }
+
+  public create({ title, value, type }: CreateTransactionDTO): Transaction {
     // calling model class
-    const transaction = new Transaction({ title, value, type });
+    const transaction = new Transaction({ title, type, value });
 
     this.transactions.push(transaction);
+
     return transaction;
   }
 }
